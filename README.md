@@ -277,4 +277,4 @@ https://solved.ac/api/v3/search/problem?query=@[유저아이디]&sort=level&dire
 ### 상세 설명 및 소감
 
 - 👋 [이담비 소감]()
-- 👋 [정덕주 소감](https://damongsanga22.tistory.com/114](https://velog.io/@damongsanga/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%9A%8C%EA%B3%A0-Solved.ac-api%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%B0%B1%EC%A4%80-%EA%B7%B8%EB%A3%B9-%EB%A7%8C%EB%93%A4%EA%B8%B0-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)https://velog.io/@damongsanga/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%9A%8C%EA%B3%A0-Solved.ac-api%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%B0%B1%EC%A4%80-%EA%B7%B8%EB%A3%B9-%EB%A7%8C%EB%93%A4%EA%B8%B0-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)
+- 👋 [정덕주 소감](https://velog.io/@damongsanga/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%9A%8C%EA%B3%A0-Solved.ac-api%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%B0%B1%EC%A4%80-%EA%B7%B8%EB%A3%B9-%EB%A7%8C%EB%93%A4%EA%B8%B0-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)
