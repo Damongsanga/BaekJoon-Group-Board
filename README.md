@@ -53,8 +53,8 @@
 
 ```
 SpringBoot 3.1.5 Gradle
-Vue3
-solvec.ac api v3
+Vue 3.3.4
+solved.ac api v3
 ```
 
 <hr>
@@ -92,8 +92,8 @@ solvec.ac api v3
 
 ###### ⚠️ 참고사항 ⚠️
 
-- solved.ac api가 비공식 api임으로 이후 version이 변경되거나 서비스를 중단할 수 있음
-- solved.ac api 버전 변경에 따른 호출 횟수 제한으로 인한 오류가 발생할 수 있음.
+- solved.ac api는 비공식 api임으로, 이후 version이 변경되거나 서비스를 중단할 수 있음
+- solved.ac api 버전 변경에 따른 호출 횟수 제한 변경 인한 오류가 발생할 수 있음.
 
 <hr>
 
@@ -274,7 +274,7 @@ https://solved.ac/api/v3/search/problem?query=@[유저아이디]&sort=level&dire
 
 <hr>
 
-### 상세 설명 및 소감
+### 회고
 
-- 👋 [이담비 소감]()
-- 👋 [정덕주 소감](https://velog.io/@damongsanga/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%9A%8C%EA%B3%A0-Solved.ac-api%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%B0%B1%EC%A4%80-%EA%B7%B8%EB%A3%B9-%EB%A7%8C%EB%93%A4%EA%B8%B0-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)
+- 👋 [이담비 회고]()
+- 👋 [정덕주 회고](https://velog.io/@damongsanga/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%9A%8C%EA%B3%A0-Solved.ac-api%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%B0%B1%EC%A4%80-%EA%B7%B8%EB%A3%B9-%EB%A7%8C%EB%93%A4%EA%B8%B0-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)
