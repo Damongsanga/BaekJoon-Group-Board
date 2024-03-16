@@ -39,4 +39,4 @@ out/
 ### logFile ###
 log/
 ### IntelliJ ###
-/.idea
+.idea
