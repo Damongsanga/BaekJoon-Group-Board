@@ -3,6 +3,8 @@ package com.ssafypjt.bboard.model.domain.solvedacAPI;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafypjt.bboard.model.entity.User;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,13 +14,10 @@ import java.util.List;
 @Component
 public class UserDomain {
 
-    private ObjectMapper mapper;
+    private final ObjectMapper mapper;
 
+    @Getter
     private final List<User> userList = new ArrayList<>();
-
-    public List<User> getUserList(){
-        return userList;
-    }
 
     @Autowired
     public UserDomain(ObjectMapper mapper) {

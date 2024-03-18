@@ -2,7 +2,8 @@ package com.ssafypjt.bboard.model.entity;
 
 import lombok.*;
 
-@Data
+@Getter
+@NoArgsConstructor
 public class RecomProblem{
     private int id;
     private int userId;

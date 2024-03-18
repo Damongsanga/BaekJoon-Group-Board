@@ -3,22 +3,18 @@ package com.ssafypjt.bboard.model.service;
 import com.ssafypjt.bboard.model.entity.User;
 import com.ssafypjt.bboard.model.repository.UserGroupRepository;
 import com.ssafypjt.bboard.model.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
 
-    private UserRepository userRepository;
-    private UserGroupRepository userGroupRepository;
-
-    @Autowired
-    public UserServiceImpl(UserRepository userRepository, UserGroupRepository userGroupRepository) {
-        this.userRepository = userRepository;
-        this.userGroupRepository = userGroupRepository;
-    }
+    private final UserRepository userRepository;
+    private final UserGroupRepository userGroupRepository;
 
     @Override
     public User getUser(int userId) {

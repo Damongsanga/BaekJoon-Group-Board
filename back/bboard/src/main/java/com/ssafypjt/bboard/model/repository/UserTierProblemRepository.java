@@ -1,6 +1,6 @@
 package com.ssafypjt.bboard.model.repository;
 
-import com.ssafypjt.bboard.model.domain.solvedacAPI.ProblemAlgorithm;
+import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
 import com.ssafypjt.bboard.model.entity.Problem;
 import com.ssafypjt.bboard.model.entity.User;
 import org.apache.ibatis.annotations.*;
@@ -35,7 +35,7 @@ public interface UserTierProblemRepository {
             "</foreach>",
             "</script>"
     })
-    public int insertTierProblems(List<ProblemAlgorithm> list);
+    public int insertTierProblems(List<ProblemAlgorithmVo> list);
 
     @Delete("DELETE FROM user_tier_problem")
     public int deleteAll();

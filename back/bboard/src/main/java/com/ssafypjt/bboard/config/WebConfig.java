@@ -17,7 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**").allowedOrigins("https://solved.ac/api/v3", "http://localhost:5173")
-				.allowedMethods("GET", "POST", "DELETE").allowCredentials(true); // 쿠키 인증 요청 허용
+				.allowedMethods("GET", "POST", "DELETE").allowCredentials(true);
 	}
 	
 	

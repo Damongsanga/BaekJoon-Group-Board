@@ -3,8 +3,10 @@ package com.ssafypjt.bboard.model.domain;
 import com.ssafypjt.bboard.model.domain.solvedacAPI.*;
 import com.ssafypjt.bboard.model.entity.User;
 import com.ssafypjt.bboard.model.entity.UserTier;
-import com.ssafypjt.bboard.model.enums.SACApiEnum;
+import com.ssafypjt.bboard.model.enums.SolvedAcApi;
 import com.ssafypjt.bboard.model.repository.*;
+import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
+import com.ssafypjt.bboard.model.vo.UserPageNo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -68,8 +70,8 @@ public class ReloadDomain {
                     .delayElements(Duration.ofMillis(1))
                     .flatMap(user ->
                             fetchDomain.fetchOneQueryData(
-                                            SACApiEnum.USER.getPath(),
-                                            SACApiEnum.USER.getQuery(user.getUserName())
+                                            SolvedAcApi.USER.getPath(),
+                                            SolvedAcApi.USER.getQuery(user.getUserName())
                                     )
                                     .doOnNext(data -> {
                                         log.info("현재 processUser 스레드 이름: {}", Thread.currentThread().getName());
@@ -99,17 +101,17 @@ public class ReloadDomain {
     // 문제 리셋
     public void processProblem(List<User> users) {
         Long cur = System.currentTimeMillis();
-        List<ProblemAlgorithm> problemAlgorithms = new ArrayList<>();
+        List<ProblemAlgorithmVo> problemAlgorithmVos = new ArrayList<>();
             Flux.fromIterable(users)
                     .delayElements(Duration.ofMillis(1))
                     .flatMap(user ->
                             fetchDomain.fetchOneQueryData(
-                                            SACApiEnum.PROBLEMANDALGO.getPath(),
-                                            SACApiEnum.PROBLEMANDALGO.getQuery(user.getUserName())
+                                            SolvedAcApi.PROBLEMANDALGO.getPath(),
+                                            SolvedAcApi.PROBLEMANDALGO.getQuery(user.getUserName())
                                     )
                                     .doOnNext(data -> {
                                         log.info("현재 processProblem 스레드 이름: {}", Thread.currentThread().getName());
-                                        problemDomain.makeProblemAndAlgoDomainObject(problemAlgorithms, data, user);
+                                        problemDomain.makeProblemAndAlgoDomainObject(problemAlgorithmVos, data, user);
                                             }
                                     )
                     ).then()
@@ -117,8 +119,8 @@ public class ReloadDomain {
                             null, // onNext 처리는 필요 없음
                             e -> log.error("error message : {}", e.getMessage()),
                             () -> {
-                                resetProblems(problemAlgorithms);
-                                log.info("updated problem : {}", problemAlgorithms.size());
+                                resetProblems(problemAlgorithmVos);
+                                log.info("updated problem : {}", problemAlgorithmVos.size());
                                 log.info("reset time : {} ms", System.currentTimeMillis() - cur);
 
                                 //유저의 티어별 문제 갯수 받아오기
@@ -128,7 +130,7 @@ public class ReloadDomain {
 
     }
 
-    public void resetProblems(List<ProblemAlgorithm> list) {
+    public void resetProblems(List<ProblemAlgorithmVo> list) {
         // 기존 테이블 삭제
         problemRepository.deleteAll();
         userTierProblemRepository.deleteAll(); // 티어별 문제도 삭제해야 알고리즘 삭제 가능
@@ -149,8 +151,8 @@ public class ReloadDomain {
                     .delayElements(Duration.ofMillis(1))
                     .flatMap(user ->
                             fetchDomain.fetchOneQueryDataUserTier(
-                                            SACApiEnum.TIER.getPath(),
-                                            SACApiEnum.TIER.getQuery(user.getUserName())
+                                            SolvedAcApi.TIER.getPath(),
+                                            SolvedAcApi.TIER.getQuery(user.getUserName())
                                     )
                                     .doOnNext(data -> {
                                         log.info("현재 processUserTier 스레드 이름: {}", Thread.currentThread().getName());
@@ -187,20 +189,20 @@ public class ReloadDomain {
     public void processUserTierProblem(List<User> users, Map<Integer, List<UserTier>> totalMap) {
         Long cur = System.currentTimeMillis();
         List<UserPageNo> userPageNoList = userTierProblemDomain.makeUserPageNoObjectDomainList(users, totalMap);
-        Map<User, Map<Integer, List<ProblemAlgorithm>>> memoMap = new HashMap<>();
+        Map<User, Map<Integer, List<ProblemAlgorithmVo>>> memoMap = new HashMap<>();
         log.info("userPageNoList size : {}", userPageNoList.size());
         Flux.fromIterable(userPageNoList)
                 .delayElements(Duration.ofMillis(1))
                 .flatMap(userPageNo ->
                     fetchDomain.fetchOneQueryData(
-                                    SACApiEnum.USERTIERPROBLEM.getPath(),
-                                    SACApiEnum.USERTIERPROBLEM.getQuery(userPageNo.getUser().getUserName(), userPageNo.getPageNo())
+                                    SolvedAcApi.USERTIERPROBLEM.getPath(),
+                                    SolvedAcApi.USERTIERPROBLEM.getQuery(userPageNo.getUser().getUserName(), userPageNo.getPageNo())
                             )
                             .doOnNext(data -> {
                                 log.info("현재 processUserTierProblem 스레드 이름: {}", Thread.currentThread().getName());
                                 User user = userPageNo.getUser();
                                         int pageNo = userPageNo.getPageNo();
-                                        List<ProblemAlgorithm> list = problemDomain.makeProblemAndAlgoDomainList(data.path("items"), userPageNo.getUser());
+                                        List<ProblemAlgorithmVo> list = problemDomain.makeProblemAndAlgoDomainList(data.path("items"), userPageNo.getUser());
                                         memoMap.putIfAbsent(user, new HashMap<>());
                                         memoMap.get(user).putIfAbsent(pageNo, list);
                                     }
@@ -210,7 +212,7 @@ public class ReloadDomain {
                         null, // onNext 처리는 필요 없음
                         e -> log.error("error message : {}", e.getMessage()),
                         () -> {
-                            List<ProblemAlgorithm> totalProblemAndAlgoList = userTierProblemDomain.makeTotalProblemAndAlgoList(memoMap, totalMap);
+                            List<ProblemAlgorithmVo> totalProblemAndAlgoList = userTierProblemDomain.makeTotalProblemAndAlgoList(memoMap, totalMap);
                             resetUserTierProblems(totalProblemAndAlgoList);
                             log.info("updated user-tier-problem : {}", totalProblemAndAlgoList.size());
                             log.info("reset time : {} ms", System.currentTimeMillis() - cur);
@@ -219,7 +221,7 @@ public class ReloadDomain {
     }
 
 
-    public void resetUserTierProblems(List<ProblemAlgorithm> list) {
+    public void resetUserTierProblems(List<ProblemAlgorithmVo> list) {
         userTierProblemRepository.deleteAll();
         problemAlgorithmRepository.insertAlgorithms(list);
         userTierProblemRepository.insertTierProblems(list);

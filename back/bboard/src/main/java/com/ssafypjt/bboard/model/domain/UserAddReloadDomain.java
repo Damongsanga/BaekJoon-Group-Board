@@ -3,8 +3,10 @@ package com.ssafypjt.bboard.model.domain;
 import com.ssafypjt.bboard.model.domain.solvedacAPI.*;
 import com.ssafypjt.bboard.model.entity.User;
 import com.ssafypjt.bboard.model.entity.UserTier;
-import com.ssafypjt.bboard.model.enums.SACApiEnum;
+import com.ssafypjt.bboard.model.enums.SolvedAcApi;
 import com.ssafypjt.bboard.model.repository.*;
+import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
+import com.ssafypjt.bboard.model.vo.UserPageNo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -53,8 +55,8 @@ public class UserAddReloadDomain {
             Map<String, User> map = new HashMap<>();
             var mono = Mono.defer(() ->
                     fetchDomain.fetchOneQueryDataMono(
-                                    SACApiEnum.USER.getPath(),
-                                    SACApiEnum.USER.getQuery(userName)
+                                    SolvedAcApi.USER.getPath(),
+                                    SolvedAcApi.USER.getQuery(userName)
                             )
                             .doOnNext(data -> {
                                 map.put("user", userDomain.makeUserObject(data));
@@ -83,11 +85,11 @@ public class UserAddReloadDomain {
         }
 
         private void processProblem(User user) {
-            List<ProblemAlgorithm> list = new ArrayList<>();
+            List<ProblemAlgorithmVo> list = new ArrayList<>();
             var mono = Mono.defer(() ->
                     fetchDomain.fetchOneQueryDataMono(
-                                    SACApiEnum.PROBLEMANDALGO.getPath(),
-                                    SACApiEnum.PROBLEMANDALGO.getQuery(user.getUserName())
+                                    SolvedAcApi.PROBLEMANDALGO.getPath(),
+                                    SolvedAcApi.PROBLEMANDALGO.getQuery(user.getUserName())
                             )
                             .doOnNext(data ->
                                     list.addAll(problemDomain.makeProblemAndAlgoDomainObjectMono(data, user))
@@ -102,7 +104,7 @@ public class UserAddReloadDomain {
             );
         }
 
-        private void resetProblems(List<ProblemAlgorithm> list) {
+        private void resetProblems(List<ProblemAlgorithmVo> list) {
             Collections.sort(list);
             problemAlgorithmRepository.insertAlgorithms(list);
             problemRepository.insertProblems(list);
@@ -117,8 +119,8 @@ public class UserAddReloadDomain {
 
             var mono = Flux.defer(() ->
                     fetchDomain.fetchOneQueryDataUserTier(
-                                    SACApiEnum.TIER.getPath(),
-                                    SACApiEnum.TIER.getQuery(user.getUserName())
+                                    SolvedAcApi.TIER.getPath(),
+                                    SolvedAcApi.TIER.getQuery(user.getUserName())
                             )
                             .doOnNext(data -> {
                                         data.setUserId(user.getUserId());
@@ -148,18 +150,18 @@ public class UserAddReloadDomain {
         private void processUserTierProblem(User user, Map<Integer, List<UserTier>> totalMap) {
             Long cur = System.currentTimeMillis();
             List<UserPageNo> userPageNoList = userTierProblemDomain.makeUserPageNoObjectDomainList(user, totalMap.get(user.getUserId()));
-            Map<User, Map<Integer, List<ProblemAlgorithm>>> memoMap = new HashMap<>();
+            Map<User, Map<Integer, List<ProblemAlgorithmVo>>> memoMap = new HashMap<>();
 
             Flux.fromIterable(userPageNoList)
                     .delayElements(Duration.ofMillis(1))
                     .flatMap(userPageNo ->
                             fetchDomain.fetchOneQueryData(
-                                            SACApiEnum.USERTIERPROBLEM.getPath(),
-                                            SACApiEnum.USERTIERPROBLEM.getQuery(userPageNo.getUser().getUserName(), userPageNo.getPageNo())
+                                            SolvedAcApi.USERTIERPROBLEM.getPath(),
+                                            SolvedAcApi.USERTIERPROBLEM.getQuery(userPageNo.getUser().getUserName(), userPageNo.getPageNo())
                                     )
                                     .doOnNext(data -> {
                                                 int pageNo = userPageNo.getPageNo();
-                                                List<ProblemAlgorithm> list = problemDomain.makeProblemAndAlgoDomainList(data.path("items"), userPageNo.getUser());
+                                                List<ProblemAlgorithmVo> list = problemDomain.makeProblemAndAlgoDomainList(data.path("items"), userPageNo.getUser());
                                                 synchronized (memoMap) {
                                                     memoMap.putIfAbsent(user, new HashMap<>());
                                                     memoMap.get(user).putIfAbsent(pageNo, list);
@@ -172,7 +174,7 @@ public class UserAddReloadDomain {
                             null, // onNext 처리는 필요 없음
                             e -> log.error("error message : {}", e.getMessage()),
                             () -> {
-                                List<ProblemAlgorithm> totalProblemAndAlgoList = userTierProblemDomain.makeTotalProblemAndAlgoList(memoMap, totalMap);
+                                List<ProblemAlgorithmVo> totalProblemAndAlgoList = userTierProblemDomain.makeTotalProblemAndAlgoList(memoMap, totalMap);
                                 resetUserTierProblems(totalProblemAndAlgoList);
                                 log.info("{} user tier problem added : {}", user, totalProblemAndAlgoList.size());
                                 log.info("{} user reload time : {}s", user, System.currentTimeMillis() - cur);
@@ -180,7 +182,7 @@ public class UserAddReloadDomain {
                     );
         }
 
-        private void resetUserTierProblems(List<ProblemAlgorithm> list) {
+        private void resetUserTierProblems(List<ProblemAlgorithmVo> list) {
             problemAlgorithmRepository.insertAlgorithms(list);
             userTierProblemRepository.insertTierProblems(list);
         }

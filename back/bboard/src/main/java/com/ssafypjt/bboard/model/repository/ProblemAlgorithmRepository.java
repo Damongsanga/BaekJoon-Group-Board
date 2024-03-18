@@ -1,6 +1,7 @@
 package com.ssafypjt.bboard.model.repository;
 
-import com.ssafypjt.bboard.model.domain.solvedacAPI.ProblemAlgorithm;
+import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
+import com.ssafypjt.bboard.model.entity.ProblemAlgorithm;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -19,12 +20,12 @@ public interface ProblemAlgorithmRepository {
             "</foreach>",
             "</script>"
     })
-    public int insertAlgorithms(List<ProblemAlgorithm> list);
+    public int insertAlgorithms(List<ProblemAlgorithmVo> list);
 
     @Select("SELECT problem_num as problemNum, algorithm FROM problem_algorithm WHERE problem_num = #{problemNum}")
-    public com.ssafypjt.bboard.model.entity.ProblemAlgorithm selectAlgorithm(int problemNum);
+    public ProblemAlgorithm selectAlgorithm(int problemNum);
 
     @Select("SELECT problem_num as problemNum, algorithm FROM problem_algorithm ORDER BY problem_num ASC")
-    public List<com.ssafypjt.bboard.model.entity.ProblemAlgorithm> selectAllAlgorithm();
+    public List<ProblemAlgorithm> selectAllAlgorithm();
 
 }

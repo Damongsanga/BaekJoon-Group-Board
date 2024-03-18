@@ -2,15 +2,16 @@ package com.ssafypjt.bboard.model.domain.solvedacAPI;
 
 import com.ssafypjt.bboard.model.entity.User;
 import com.ssafypjt.bboard.model.entity.UserTier;
+import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
+import com.ssafypjt.bboard.model.vo.UserPageNo;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
+@NoArgsConstructor
 public class UserTierProblemDomain {
-
-    public UserTierProblemDomain() {
-    }
 
     public List<UserPageNo> makeUserPageNoObjectDomainList (List<User> users, Map<Integer, List<UserTier>> totalMap){
         Set<String> set = new HashSet<>();
@@ -37,21 +38,22 @@ public class UserTierProblemDomain {
     }
 
     // problemDomain 코드 이용함
-    public List<ProblemAlgorithm> makeTotalProblemAndAlgoList(Map<User, Map<Integer,
-            List<ProblemAlgorithm>>> memoMap, Map<Integer, List<UserTier>> userTierMap){
+    public List<ProblemAlgorithmVo> makeTotalProblemAndAlgoList(Map<User, Map<Integer,
+            List<ProblemAlgorithmVo>>> memoMap, Map<Integer, List<UserTier>> userTierMap){
 
-        List<ProblemAlgorithm> totalProblemAndAlgoList = new ArrayList<>();
+        List<ProblemAlgorithmVo> totalProblemAndAlgoList = new ArrayList<>();
         for (User user: memoMap.keySet()) {
             List<UserTier> userTierList = userTierMap.get(user.getUserId()); // 유저당 userTier 데이터 저장된 맵
             int prevPage = 0;
-            List<ProblemAlgorithm> problemListByPage = null;
+            List<ProblemAlgorithmVo> problemListByPage = null;
             for (UserTier userTier : userTierList) {
                 if(prevPage != userTier.getPageNo()){
                     problemListByPage = memoMap.get(user).get(userTier.getPageNo());
                     prevPage = userTier.getPageNo();
                 }
                 if (userTier.getProblemCount() != 0) {
-                    ProblemAlgorithm problemAndAlgo = problemListByPage.get(userTier.getPageIdx());
+                    assert problemListByPage != null;
+                    ProblemAlgorithmVo problemAndAlgo = problemListByPage.get(userTier.getPageIdx());
                     problemAndAlgo.getProblem().setUserId(user.getUserId());
                     totalProblemAndAlgoList.add(problemAndAlgo);
                 }
