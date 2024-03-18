@@ -1,6 +1,6 @@
 package com.ssafypjt.bboard.model.repository;
 
-import com.ssafypjt.bboard.model.domain.solvedacAPI.ProblemAlgorithm;
+import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
 import com.ssafypjt.bboard.model.entity.Problem;
 import com.ssafypjt.bboard.model.entity.User;
 import org.apache.ibatis.annotations.*;
@@ -44,6 +44,6 @@ public interface ProblemRepository {
             "</foreach>",
             "</script>"
     })
-    public int insertProblems(List<ProblemAlgorithm> list);
+    public int insertProblems(List<ProblemAlgorithmVo> list);
 
 }
