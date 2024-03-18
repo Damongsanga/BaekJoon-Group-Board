@@ -1,16 +1,18 @@
 package com.ssafypjt.bboard.tierProblemTest;
 
-import com.ssafypjt.bboard.model.domain.solvedacAPI.ProblemAlgorithm;
+import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
 import com.ssafypjt.bboard.model.entity.Problem;
 import com.ssafypjt.bboard.model.entity.UserTier;
 import com.ssafypjt.bboard.model.repository.UserTierProblemRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@SpringBootTest
 public class TierProblemAPITest {
 
     @Autowired
@@ -65,7 +67,7 @@ public class TierProblemAPITest {
         userTierProblemRepository.deleteAll();
         int currPage = 0;
         // 맵으로 수정
-        List<ProblemAlgorithm> problemAlgorithmList = null;
+        List<ProblemAlgorithmVo> problemAlgorithmVoList = null;
         for (int i = MAX_TIER; i >=0; i--) {
             UserTier now = list.get(i);
             if (now.getPageNo() != currPage){ // 페이지를 안가져온 경우에만 API 호출
