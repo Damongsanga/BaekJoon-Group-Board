@@ -15,7 +15,7 @@ public interface GroupService {
     public List<Group> getGroups(int userId);
 
     // 그룹 생성, 유저의 그룹 수 가져와서 3개이면 못만들게 제한
-    public int makeGroup(User user, Group group);
+    public int makeGroup(int userId, Group group);
 
     // 그룹 삭제, adminValid 필요
     public int removeGroup(int groupId);
@@ -23,7 +23,7 @@ public interface GroupService {
     public List<User> getUsers(int groupId);
 
     // 관리자가 유저 등록시키기, adminValid 필요
-    public int addUser(Group group, int userId);
+    public User addUser(int groupId, int userId);
 
     // 관리자가 유저 탈퇴시키기, adminValid 필요
     public int removeUser(int groupId, int userId);

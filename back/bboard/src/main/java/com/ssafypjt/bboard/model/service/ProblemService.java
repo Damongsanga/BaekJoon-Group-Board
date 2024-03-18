@@ -26,7 +26,7 @@ public interface ProblemService {
     public List<Problem> getUserTierProblems(int userId);
 
     // recom_problem 로직
-    public int addRecomProblem(Problem problem, int groupId);
+    public int addRecomProblem(int problemId, int groupId, int userId);
 
     public RecomProblem getRecomProblem(int problemNum, int groupId);
 
