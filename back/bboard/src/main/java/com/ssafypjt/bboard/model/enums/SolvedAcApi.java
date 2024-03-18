@@ -1,24 +1,24 @@
 package com.ssafypjt.bboard.model.enums;
 
-import com.ssafypjt.bboard.model.domain.solvedacAPI.ProblemAlgorithm;
+import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
 import com.ssafypjt.bboard.model.entity.Problem;
 import com.ssafypjt.bboard.model.entity.User;
 import com.ssafypjt.bboard.model.entity.UserTier;
 
-public enum SACApiEnum{
+public enum SolvedAcApi {
     USER("user", "/api/v3/user/show", new String[] {"handle="}, User.class),
     TIER("tier", "/api/v3/user/problem_stats", new String[] {"handle="},UserTier.class),
     USERTIERPROBLEM("tierProblem", "/api/v3/search/problem",
             new String[] {"query=@","&sort=level&direction=desc&page="}, Problem.class),
     PROBLEMANDALGO("problemAndAlgo", "/api/v3/user/top_100",
-            new String[] {"handle="} , ProblemAlgorithm.class);
+            new String[] {"handle="} , ProblemAlgorithmVo.class);
 
     private final String name;
     private final String path;
     private final String[] query;
-    private final Class rtnClass;
+    private final Class<?> rtnClass;
 
-    SACApiEnum(String name, String path, String[] query, Class rtnClass) {
+    SolvedAcApi(String name, String path, String[] query, Class<?> rtnClass) {
         this.name = name;
         this.path = path;
         this.query = query;
@@ -46,7 +46,7 @@ public enum SACApiEnum{
         return query[0] + param1 + query[1] + param2;
     }
 
-    public Class getRtnClass() {
+    public Class<?> getRtnClass() {
         return rtnClass;
     }
 

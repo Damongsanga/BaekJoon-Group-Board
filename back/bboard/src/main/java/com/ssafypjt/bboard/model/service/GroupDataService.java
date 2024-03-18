@@ -1,17 +1,19 @@
-package com.ssafypjt.bboard.model.domain.groupinfo;
+package com.ssafypjt.bboard.model.service;
 
-import com.ssafypjt.bboard.model.entity.Problem;
-import com.ssafypjt.bboard.model.entity.ProblemAlgorithm;
-import com.ssafypjt.bboard.model.entity.RecomProblem;
-import com.ssafypjt.bboard.model.entity.User;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ssafypjt.bboard.model.entity.*;
 import com.ssafypjt.bboard.model.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-@Component
-public class GroupDomain {
+@Service
+@RequiredArgsConstructor
+public class GroupDataService {
 
     private final ProblemAlgorithmRepository problemAlgorithmRepository;
     private final ProblemRepository problemRepository;
@@ -19,21 +21,30 @@ public class GroupDomain {
     private final UserGroupRepository userGroupRepository;
     private final UserRepository userRepository;
     private final UserTierProblemRepository userTierProblemRepository;
+    private final ObjectMapper mapper;
 
-    private final int TIER_DIFF_UPPERBOUND = 5;
-    private final int TIER_DIFF_LOWERBOUND = -2;
+    public ObjectNode getData(UserGroup userGroup){
+        List<User> userList = getUsers(userGroup); // 그룹 해당 유저 정보
+        List<Problem> top100problemList = getProblems(userGroup, userList); // 그룹별 top 100개 문제 정보
+        List<Problem> userTierProblemList = getUserTierProblems(userGroup, userList); // 그룹별 로그인된 유저에 해당하는 userTierProblem 정보
+        List<RecomProblem> recomProblemList = getRecomProblems(userGroup); // 그룹별 recomProblem 정보
+        List<ProblemAlgorithm> algorithmList = getAlgorithms(top100problemList, recomProblemList); // 그룹의 모든 문제의 알고리즘 정보
+        List<Problem> userTop100ProblemList = getUserProblems(userGroup); // 유저의 top 100개 문제 정보 (Recomproblem 등록 위해)
 
-    @Autowired
-    public GroupDomain(ProblemAlgorithmRepository problemAlgorithmRepository, ProblemRepository problemRepository, RecomProblemRepository recomProblemRepository, UserGroupRepository userGroupRepository, UserRepository userRepository, UserTierProblemRepository userTierProblemRepository) {
-        this.problemAlgorithmRepository = problemAlgorithmRepository;
-        this.problemRepository = problemRepository;
-        this.recomProblemRepository = recomProblemRepository;
-        this.userGroupRepository = userGroupRepository;
-        this.userRepository = userRepository;
-        this.userTierProblemRepository = userTierProblemRepository;
+        ObjectNode responseJson = JsonNodeFactory.instance.objectNode();
+        responseJson.set("user", mapper.valueToTree(userGroup.getUser()));
+        responseJson.set("group", mapper.valueToTree(userGroup.getGroup()));
+        responseJson.set("users", mapper.valueToTree(userList));
+        responseJson.set("top100problems", mapper.valueToTree(top100problemList));
+        responseJson.set("userTierProblems", mapper.valueToTree((userTierProblemList)));
+        responseJson.set("recomProblems", mapper.valueToTree(recomProblemList));
+        responseJson.set("algorithms", mapper.valueToTree(algorithmList));
+        responseJson.set("userTop100problems", mapper.valueToTree(userTop100ProblemList));
+
+        return responseJson;
     }
 
-    public List<User> getUsers(UserGroup userAndGroup){
+    private List<User> getUsers(UserGroup userAndGroup){
         List<User> userList = new ArrayList<>();
         for(int userId : userGroupRepository.selectUserId(userAndGroup.getGroup().getId())){
             userList.add(userRepository.selectUser(userId));
@@ -42,9 +53,9 @@ public class GroupDomain {
     }
 
     // 반출 순서는 1. 티어 내림차순 2. 문제수 오름차순 (2번 조건을 안주면 userId가별로 오름차순되어서 userId가 낮을 수록 유리해진다)
-    public List<Problem> getProblems(UserGroup userAndGroup, List<User> userList){
+    private List<Problem> getProblems(UserGroup userAndGroup, List<User> userList){
         List<Problem> problemList = problemRepository.selectGroupProblem(userList);
-        Collections.sort(problemList, (o1, o2) -> {
+        problemList.sort((o1, o2) -> {
             if (o2.getTier() == o1.getTier()) return o1.getProblemNum() - o2.getProblemNum();
             return o2.getTier() - o1.getTier();
         });
@@ -68,10 +79,11 @@ public class GroupDomain {
     // 로그인된 유저와 관련된 문제만 선정
     // 로그인된 유저 레벨과 아래로 2, 위로 5차이나는 문제 가져오기
     // 다 주고 프론트에서 랜덤으로 추천해주는 것도 좋을듯?! -> 안좋음, 백에서 다 정리해서 주자
-    public List<Problem> getUserTierProblems(UserGroup userAndGroup, List<User> userList){
-        List<Problem> returnList = new ArrayList<>();
+    private List<Problem> getUserTierProblems(UserGroup userAndGroup, List<User> userList){
         Map<Integer, Problem> map = new HashMap<>();
         User user = userAndGroup.getUser();
+        int TIER_DIFF_UPPERBOUND = 5;
+        int TIER_DIFF_LOWERBOUND = -2;
 
         for (Problem problem: userTierProblemRepository.selectGroupTierProblem(userList)) {
             int tierDiff = problem.getTier() - user.getTier();
@@ -84,17 +96,16 @@ public class GroupDomain {
             }
         }
 
-        returnList.addAll(map.values());
-        return returnList;
+        return new ArrayList<>(map.values());
     }
 
-    public List<RecomProblem> getRecomProblems(UserGroup userAndGroup){
+    private List<RecomProblem> getRecomProblems(UserGroup userAndGroup){
         return recomProblemRepository.selectGroupRecomProblems(userAndGroup.getGroup().getId());
     }
 
     // 그룹의 모든 문제의 알고리즘 정보 선정
     // user_group과 problem_algorithm 테이블을 연동하기 위해서는 join을 3번해야해서 모든 알고리즘을 가져오고 이분 탐색을 사용하였다.
-    public List<ProblemAlgorithm> getAlgorithms(List<Problem> top100problemList, List<RecomProblem> recomProblemList){
+    private List<ProblemAlgorithm> getAlgorithms(List<Problem> top100problemList, List<RecomProblem> recomProblemList){
         List<ProblemAlgorithm> problemAlgorithms = problemAlgorithmRepository.selectAllAlgorithm(); // 문제 번호로 오름차순 정렬
         int[] problemNums = new int[problemAlgorithms.size()];
         for (int i = 0; i< problemAlgorithms.size(); i++){
@@ -113,7 +124,7 @@ public class GroupDomain {
         return returnList;
     }
 
-    public List<Problem> getUserProblems(UserGroup userAndGroup){
+    private List<Problem> getUserProblems(UserGroup userAndGroup){
         return problemRepository.selectUserProblem(userAndGroup.getUser().getUserId());
     }
 
