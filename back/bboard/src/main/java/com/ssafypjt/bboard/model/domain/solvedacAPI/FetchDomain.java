@@ -2,18 +2,16 @@ package com.ssafypjt.bboard.model.domain.solvedacAPI;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ssafypjt.bboard.model.entity.UserTier;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Component
+@RequiredArgsConstructor
 public class FetchDomain {
     private final WebClient webClient;
-
-    public FetchDomain(WebClient webClient) {
-        this.webClient = webClient;
-    }
 
     public Flux<JsonNode> fetchOneQueryData(String pathQuery, String query) {
         return webClient.get()
