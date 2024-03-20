@@ -12,17 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class UserDomain {
 
     private final ObjectMapper mapper;
-
-    @Getter
-    private final List<User> userList = new ArrayList<>();
-
-    @Autowired
-    public UserDomain(ObjectMapper mapper) {
-        this.mapper = mapper;
-    }
 
     public User makeUserObject(JsonNode aNode) {
         User user = mapper.convertValue(aNode, User.class);
