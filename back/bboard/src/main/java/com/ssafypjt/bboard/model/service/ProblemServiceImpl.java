@@ -3,7 +3,6 @@ package com.ssafypjt.bboard.model.service;
 import com.ssafypjt.bboard.model.entity.*;
 import com.ssafypjt.bboard.model.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,7 +80,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     @Override
     public List<ProblemAlgorithm> getAllAlgorithm() {
-        return problemAlgorithmRepository.selectAllAlgorithm();
+        return problemAlgorithmRepository.selectAllAlgorithms();
     }
 
     @Override

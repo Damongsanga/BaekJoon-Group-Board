@@ -7,7 +7,6 @@ import com.ssafypjt.bboard.model.repository.RecomProblemRepository;
 import com.ssafypjt.bboard.model.repository.UserGroupRepository;
 import com.ssafypjt.bboard.model.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +35,7 @@ public class GroupServiceImpl implements GroupService{
     @Override
     public List<Group> getGroups(int userId) {
         List<Group> list = new ArrayList<>();
-        for (Integer groupId : userGroupRepository.selectGroupId(userId)) {
+        for (Integer groupId : userGroupRepository.selectGroupIds(userId)) {
             list.add(groupRepository.selectGroup(groupId));
         }
         return list;
@@ -46,7 +45,7 @@ public class GroupServiceImpl implements GroupService{
     @Transactional
     public int makeGroup(int userId, Group group) {
         if (groupRepository.selectGroupByName(group.getGroupName()) != null) return -1;
-        if (userGroupRepository.selectGroupId(userId).size() >= 3) return 0; // 해당 그룹이 3개 이하일 때만
+        if (userGroupRepository.selectGroupIds(userId).size() >= 3) return 0; // 해당 그룹이 3개 이하일 때만
         return groupRepository.insertGroup(group);
     }
 
@@ -55,13 +54,13 @@ public class GroupServiceImpl implements GroupService{
     @Transactional
     public int removeGroup(int groupId) {
         userGroupRepository.removeAllUserGroup(groupId);
-        recomProblemRepository.deleteGroupRecomProblemd(groupId);
+        recomProblemRepository.deleteGroupRecomProblem(groupId);
         return groupRepository.deleteGroup(groupId);
     }
 
     public List<User> getUsers(int groupId){
         List<User> userList = new ArrayList<>();
-        for(int userId : userGroupRepository.selectUserId(groupId)){
+        for(int userId : userGroupRepository.selectUserIds(groupId)){
             userList.add(userRepository.selectUser(userId));
         }
         return userList;

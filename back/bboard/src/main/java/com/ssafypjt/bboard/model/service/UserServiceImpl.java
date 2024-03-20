@@ -4,7 +4,6 @@ import com.ssafypjt.bboard.model.entity.User;
 import com.ssafypjt.bboard.model.repository.UserGroupRepository;
 import com.ssafypjt.bboard.model.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,13 +27,13 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public List<User> getAllUser() {
-        return userRepository.selectAllUser();
+        return userRepository.selectAllUsers();
     }
 
 
     @Override
     public List<Integer> getGroupIdByUser(int userId) {
-        return userGroupRepository.selectGroupId(userId);
+        return userGroupRepository.selectGroupIds(userId);
     }
 
 }
