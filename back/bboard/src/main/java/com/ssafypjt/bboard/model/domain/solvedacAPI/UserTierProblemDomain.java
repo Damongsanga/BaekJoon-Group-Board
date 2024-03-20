@@ -37,25 +37,32 @@ public class UserTierProblemDomain {
         return userPageNoList;
     }
 
-    // problemDomain 코드 이용함
+    // 전체 유저에 대한 problem & algorithm 리스트 생성
     public List<ProblemAlgorithmVo> makeTotalProblemAndAlgoList(Map<User, Map<Integer,
             List<ProblemAlgorithmVo>>> memoMap, Map<Integer, List<UserTier>> userTierMap){
 
         List<ProblemAlgorithmVo> totalProblemAndAlgoList = new ArrayList<>();
+
+        // 유저당 Problem & Alogorithm VO 생성
         for (User user: memoMap.keySet()) {
             List<UserTier> userTierList = userTierMap.get(user.getUserId()); // 유저당 userTier 데이터 저장된 맵
             int prevPage = 0;
             List<ProblemAlgorithmVo> problemListByPage = null;
             for (UserTier userTier : userTierList) {
+
+                // 메모이제이션 활용
+                // 직전에 API로 가져온 페이지가 아닐 때만 추가로 API 요청하도록 memoMap에 기록
                 if(prevPage != userTier.getPageNo()){
                     problemListByPage = memoMap.get(user).get(userTier.getPageNo());
                     prevPage = userTier.getPageNo();
                 }
+
                 if (userTier.getProblemCount() != 0) {
                     assert problemListByPage != null;
-                    ProblemAlgorithmVo problemAndAlgo = problemListByPage.get(userTier.getPageIdx());
-                    problemAndAlgo.getProblem().setUserId(user.getUserId());
-                    totalProblemAndAlgoList.add(problemAndAlgo);
+
+                    ProblemAlgorithmVo problemAndAlgoVo = problemListByPage.get(userTier.getPageIdx());
+                    problemAndAlgoVo.getProblem().setUserId(user.getUserId());
+                    totalProblemAndAlgoList.add(problemAndAlgoVo);
                 }
             }
         }

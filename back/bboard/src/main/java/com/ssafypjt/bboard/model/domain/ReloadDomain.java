@@ -7,8 +7,8 @@ import com.ssafypjt.bboard.model.enums.SolvedAcApi;
 import com.ssafypjt.bboard.model.repository.*;
 import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
 import com.ssafypjt.bboard.model.vo.UserPageNo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -20,6 +20,7 @@ import java.util.*;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class ReloadDomain {
 
     private final ProblemRepository problemRepository;
@@ -33,152 +34,130 @@ public class ReloadDomain {
     private final TierProblemRepository tierProblemRepository;
     private final UserTierProblemDomain userTierProblemDomain;
 
-    @Autowired
-    public ReloadDomain(ProblemRepository problemRepository, UserRepository userRepository, ProblemAlgorithmRepository problemAlgorithmRepository, ProblemDomain problemDomain, UserDomain userDomain, FetchDomain fetchDomain, UserTierDomain userTierDomain, UserTierProblemRepository userTierProblemRepository, TierProblemRepository tierProblemRepository, UserTierProblemDomain userTierProblemDomain) {
-        this.problemRepository = problemRepository;
-        this.userRepository = userRepository;
-        this.problemAlgorithmRepository = problemAlgorithmRepository;
-        this.problemDomain = problemDomain;
-        this.userDomain = userDomain;
-        this.fetchDomain = fetchDomain;
-        this.userTierDomain = userTierDomain;
-        this.userTierProblemRepository = userTierProblemRepository;
-        this.tierProblemRepository = tierProblemRepository;
-        this.userTierProblemDomain = userTierProblemDomain;
-    }
-
     @Scheduled(fixedRate = 600000)
     @Transactional
     @Async
     public void scheduledTask() {
-        int maxThreads = Runtime.getRuntime().availableProcessors();
-        log.info("maxThreads : {}", maxThreads);
-        log.info("현재 scheduledTask 스레드 이름: {}", Thread.currentThread().getName());
+        log.info("maxThreads : {}", Runtime.getRuntime().availableProcessors());
         //유저 정보 업데이트
-        List<User> users = userRepository.selectAllUser();
-        processUser(users);
+        processUser(userRepository.selectAllUsers());
     }
 
 
     // 유저 정보 업데이트
-    @Async("taskExecutor")
-    public void processUser(List<User> users) {
+    private void processUser(List<User> users) {
         Long cur = System.currentTimeMillis();
-        List<User> userList = userDomain.getUserList();
-            userList.clear();
-            Flux.fromIterable(users)
-                    .delayElements(Duration.ofMillis(1))
-                    .flatMap(user ->
-                            fetchDomain.fetchOneQueryData(
-                                            SolvedAcApi.USER.getPath(),
-                                            SolvedAcApi.USER.getQuery(user.getUserName())
-                                    )
-                                    .doOnNext(data -> {
-                                        log.info("현재 processUser 스레드 이름: {}", Thread.currentThread().getName());
-                                        User newUser = userDomain.makeUserObject(data);
-                                                updateUser(newUser);
-                                            }
-                                    )
-                    )
-                    .subscribe(
-                            null, // onNext 처리는 필요 없음
-                            e -> log.error("error message : {}", e.getMessage()),
-                            () -> {
-                                log.info("updated user : {}", users.size());
-                                log.info("reset time : {} ms", System.currentTimeMillis() - cur);
-
-                                //유저 목록을 사용한 상위 문제 100개 가져오기
-                                List<User> newUsers = userRepository.selectAllUser();
-                                processProblem(newUsers);
-                            }
-                    );
+        Flux.fromIterable(users)
+                .delayElements(Duration.ofMillis(1))
+                .flatMap(user ->
+                        fetchDomain.fetchOneQueryData(
+                                        SolvedAcApi.USER.getPath(),
+                                        SolvedAcApi.USER.getQuery(user.getUserName())
+                                )
+                                .doOnNext(userNodeData -> {
+                                            updateUser(userDomain.makeUserObject(userNodeData));
+                                        }
+                                )
+                )
+                .subscribe(
+                        null,
+                        e -> log.error("error message : {}", e.getMessage()),
+                        () -> {
+                            log.info("updated user : {}", users.size());
+                            log.info("reset time : {} ms", System.currentTimeMillis() - cur);
+                            //유저 목록을 사용한 상위 문제 100개 가져오기
+                            processProblem(userRepository.selectAllUsers());
+                        }
+                );
     }
 
-    public void updateUser(User user) {
+    private void updateUser(User user) {
         userRepository.updateUser(user);
     }
 
     // 문제 리셋
-    public void processProblem(List<User> users) {
+    private void processProblem(List<User> users) {
         Long cur = System.currentTimeMillis();
         List<ProblemAlgorithmVo> problemAlgorithmVos = new ArrayList<>();
-            Flux.fromIterable(users)
-                    .delayElements(Duration.ofMillis(1))
-                    .flatMap(user ->
-                            fetchDomain.fetchOneQueryData(
-                                            SolvedAcApi.PROBLEMANDALGO.getPath(),
-                                            SolvedAcApi.PROBLEMANDALGO.getQuery(user.getUserName())
-                                    )
-                                    .doOnNext(data -> {
-                                        log.info("현재 processProblem 스레드 이름: {}", Thread.currentThread().getName());
-                                        problemDomain.makeProblemAndAlgoDomainObject(problemAlgorithmVos, data, user);
-                                            }
-                                    )
-                    ).then()
-                    .subscribe(
-                            null, // onNext 처리는 필요 없음
-                            e -> log.error("error message : {}", e.getMessage()),
-                            () -> {
-                                resetProblems(problemAlgorithmVos);
-                                log.info("updated problem : {}", problemAlgorithmVos.size());
-                                log.info("reset time : {} ms", System.currentTimeMillis() - cur);
+        Flux.fromIterable(users)
+                .delayElements(Duration.ofMillis(1))
+                .flatMap(user ->
+                        fetchDomain.fetchOneQueryData(
+                                        SolvedAcApi.PROBLEMANDALGO.getPath(),
+                                        SolvedAcApi.PROBLEMANDALGO.getQuery(user.getUserName())
+                                )
+                                .doOnNext(problemAlgorithmData -> {
+                                            problemDomain.makeProblemAndAlgoDomainObject(problemAlgorithmVos, problemAlgorithmData, user);
+                                        }
+                                )
+                ).then()
+                .subscribe(
+                        null, // onNext 처리는 필요 없음
+                        e -> log.error("error message : {}", e.getMessage()),
+                        () -> {
+                            resetProblems(problemAlgorithmVos);
+                            log.info("updated problem : {}", problemAlgorithmVos.size());
+                            log.info("reset time : {} ms", System.currentTimeMillis() - cur);
 
-                                //유저의 티어별 문제 갯수 받아오기
-                                processUserTier(users);
-                            } // 완료 처리
-                    );
+                            // 유저의 티어별 문제 갯수 받아오기
+                            processUserTier(users);
+                        }
+                );
 
     }
 
-    public void resetProblems(List<ProblemAlgorithmVo> list) {
+    private void resetProblems(List<ProblemAlgorithmVo> list) {
         // 기존 테이블 삭제
         problemRepository.deleteAll();
         userTierProblemRepository.deleteAll(); // 티어별 문제도 삭제해야 알고리즘 삭제 가능
         problemAlgorithmRepository.deleteAll();
+
         Collections.sort(list);
-        problemAlgorithmRepository.insertAlgorithms(list);
+        problemAlgorithmRepository.insertAlgorithms(list); // 알고리즘 먼저 추가 필요
         problemRepository.insertProblems(list);
     }
 
 
-    public void processUserTier(List<User> users) {
+    private void processUserTier(List<User> users) {
         Long cur = System.currentTimeMillis();
+
+        // 유저 : 유저 티어
         Map<Integer, List<UserTier>> totalMap = new HashMap<>();
         for (User user : users) {
             totalMap.put(user.getUserId(), new ArrayList<>());
         }
-            Flux.fromIterable(users)
-                    .delayElements(Duration.ofMillis(1))
-                    .flatMap(user ->
-                            fetchDomain.fetchOneQueryDataUserTier(
-                                            SolvedAcApi.TIER.getPath(),
-                                            SolvedAcApi.TIER.getQuery(user.getUserName())
-                                    )
-                                    .doOnNext(data -> {
-                                        log.info("현재 processUserTier 스레드 이름: {}", Thread.currentThread().getName());
-                                        data.setUserId(user.getUserId());
-                                            }
-                                    )
-                    )
-                    .subscribe(
-                            data -> {
-                                totalMap.get(data.getUserId()).add(data);
-                            },
-                            e -> log.error("error message : {}", e.getMessage()),
-                            () -> {
-                                for (Integer userId : totalMap.keySet()) {
-                                    List<UserTier> userTierList = totalMap.get(userId);
-                                    userTierDomain.makeUserTierObject(userTierList);
-                                }
-                                resetUserTier(totalMap);
-                                log.info("tier updated user : {}", users.size());
-                                log.info("reset time : {} ms", System.currentTimeMillis() - cur);
-                                processUserTierProblem(users, totalMap);
-                            } // 완료 처리
-                    );
+
+        Flux.fromIterable(users)
+                .delayElements(Duration.ofMillis(1))
+                .flatMap(user ->
+                        fetchDomain.fetchOneQueryDataUserTier(
+                                        SolvedAcApi.TIER.getPath(),
+                                        SolvedAcApi.TIER.getQuery(user.getUserName())
+                                ) // 유저 티어 반환
+                                .doOnNext(userTier -> {
+                                            userTier.setUserId(user.getUserId());
+                                        }
+                                )
+                )
+                .subscribe(
+                        userTier -> {
+                            totalMap.get(userTier.getUserId()).add(userTier);
+                        },
+                        e -> log.error("error message : {}", e.getMessage()),
+                        () -> {
+                            for (Integer userId : totalMap.keySet()) {
+                                List<UserTier> userTierList = totalMap.get(userId);
+                                userTierDomain.makeUserTierObject(userTierList);
+                            }
+                            resetUserTier(totalMap);
+                            log.info("tier updated user : {}", users.size());
+                            log.info("reset time : {} ms", System.currentTimeMillis() - cur);
+                            processUserTierProblem(users, totalMap);
+                        }
+                );
     }
 
-    public void resetUserTier(Map<Integer, List<UserTier>> totalMap) {
+    private void resetUserTier(Map<Integer, List<UserTier>> totalMap) {
         tierProblemRepository.deleteAll();
         for (List<UserTier> userTierList : totalMap.values()) {
             tierProblemRepository.insertUserTiers(userTierList);
@@ -186,42 +165,49 @@ public class ReloadDomain {
     }
 
     // problemDomain 코드 재시용
-    public void processUserTierProblem(List<User> users, Map<Integer, List<UserTier>> totalMap) {
-        Long cur = System.currentTimeMillis();
+    private void processUserTierProblem(List<User> users, Map<Integer, List<UserTier>> totalMap) {
+        long cur = System.currentTimeMillis();
+
+        // 유저당 API 요청이 필요한 페이지 번호 List
         List<UserPageNo> userPageNoList = userTierProblemDomain.makeUserPageNoObjectDomainList(users, totalMap);
-        Map<User, Map<Integer, List<ProblemAlgorithmVo>>> memoMap = new HashMap<>();
+        // 총 API 요청 횟수
         log.info("userPageNoList size : {}", userPageNoList.size());
+
+        // [유저] : [페이지 번호] : [문제&알고리즘 리스트]
+        Map<User, Map<Integer, List<ProblemAlgorithmVo>>> memoMap = new HashMap<>();
+
         Flux.fromIterable(userPageNoList)
                 .delayElements(Duration.ofMillis(1))
                 .flatMap(userPageNo ->
-                    fetchDomain.fetchOneQueryData(
-                                    SolvedAcApi.USERTIERPROBLEM.getPath(),
-                                    SolvedAcApi.USERTIERPROBLEM.getQuery(userPageNo.getUser().getUserName(), userPageNo.getPageNo())
-                            )
-                            .doOnNext(data -> {
-                                log.info("현재 processUserTierProblem 스레드 이름: {}", Thread.currentThread().getName());
-                                User user = userPageNo.getUser();
-                                        int pageNo = userPageNo.getPageNo();
-                                        List<ProblemAlgorithmVo> list = problemDomain.makeProblemAndAlgoDomainList(data.path("items"), userPageNo.getUser());
-                                        memoMap.putIfAbsent(user, new HashMap<>());
-                                        memoMap.get(user).putIfAbsent(pageNo, list);
-                                    }
-                            )
+                        // 현재 유저의 푼 문제 페이징 API 요청
+                        fetchDomain.fetchOneQueryData(
+                                        SolvedAcApi.USERTIERPROBLEM.getPath(),
+                                        SolvedAcApi.USERTIERPROBLEM.getQuery(userPageNo.getUser().getUserName(), userPageNo.getPageNo())
+                                )
+                                .doOnNext(problemAlgorithmDataJsonNode -> {
+                                            User user = userPageNo.getUser();
+                                            int pageNo = userPageNo.getPageNo();
+
+                                            List<ProblemAlgorithmVo> list = problemDomain.makeProblemAndAlgoDomainList(problemAlgorithmDataJsonNode.path("items"), user);
+
+                                            memoMap.putIfAbsent(user, new HashMap<>());
+                                            memoMap.get(user).putIfAbsent(pageNo, list);
+                                        }
+                                )
                 )
                 .subscribe(
-                        null, // onNext 처리는 필요 없음
+                        null,
                         e -> log.error("error message : {}", e.getMessage()),
                         () -> {
                             List<ProblemAlgorithmVo> totalProblemAndAlgoList = userTierProblemDomain.makeTotalProblemAndAlgoList(memoMap, totalMap);
                             resetUserTierProblems(totalProblemAndAlgoList);
                             log.info("updated user-tier-problem : {}", totalProblemAndAlgoList.size());
                             log.info("reset time : {} ms", System.currentTimeMillis() - cur);
-                        } // 완료 처리
+                        }
                 );
     }
 
-
-    public void resetUserTierProblems(List<ProblemAlgorithmVo> list) {
+    private void resetUserTierProblems(List<ProblemAlgorithmVo> list) {
         userTierProblemRepository.deleteAll();
         problemAlgorithmRepository.insertAlgorithms(list);
         userTierProblemRepository.insertTierProblems(list);
