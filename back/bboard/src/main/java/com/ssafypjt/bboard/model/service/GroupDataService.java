@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ssafypjt.bboard.model.entity.*;
 import com.ssafypjt.bboard.model.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -25,7 +24,7 @@ public class GroupDataService {
 
     public ObjectNode getData(UserGroup userGroup){
         List<User> userList = getUsers(userGroup); // 그룹 해당 유저 정보
-        List<Problem> top100problemList = getProblems(userGroup, userList); // 그룹별 top 100개 문제 정보
+        List<Problem> top100problemList = getProblems(userList); // 그룹별 top 100개 문제 정보
         List<Problem> userTierProblemList = getUserTierProblems(userGroup, userList); // 그룹별 로그인된 유저에 해당하는 userTierProblem 정보
         List<RecomProblem> recomProblemList = getRecomProblems(userGroup); // 그룹별 recomProblem 정보
         List<ProblemAlgorithm> algorithmList = getAlgorithms(top100problemList, recomProblemList); // 그룹의 모든 문제의 알고리즘 정보
@@ -44,27 +43,29 @@ public class GroupDataService {
         return responseJson;
     }
 
-    private List<User> getUsers(UserGroup userAndGroup){
-        List<User> userList = new ArrayList<>();
-        for(int userId : userGroupRepository.selectUserId(userAndGroup.getGroup().getId())){
-            userList.add(userRepository.selectUser(userId));
-        }
-        return userList;
+    private List<User> getUsers(UserGroup userGroup){
+        return userGroupRepository.selectUserIds(userGroup.getGroup().getId())
+                .stream()
+                .map(userRepository::selectUser)
+                .toList();
     }
 
     // 반출 순서는 1. 티어 내림차순 2. 문제수 오름차순 (2번 조건을 안주면 userId가별로 오름차순되어서 userId가 낮을 수록 유리해진다)
-    private List<Problem> getProblems(UserGroup userAndGroup, List<User> userList){
-        List<Problem> problemList = problemRepository.selectGroupProblem(userList);
+    private List<Problem> getProblems(List<User> userList){
+        List<Problem> problemList = problemRepository.selectGroupProblems(userList);
         problemList.sort((o1, o2) -> {
             if (o2.getTier() == o1.getTier()) return o1.getProblemNum() - o2.getProblemNum();
             return o2.getTier() - o1.getTier();
         });
-        List<Problem> returnList = new ArrayList<>();
+
         // 100개 선정 로직
+        List<Problem> returnList = new ArrayList<>();
         Set<Integer> set = new HashSet<>();
         int idx = 0;
         while (set.size() <= 100) {
-            if (idx >= problemList.size()) break;
+            if (idx >= problemList.size())
+                break;
+
             Problem problem = problemList.get(idx++);
             if (set.add(problem.getProblemNum())) {
                 if (set.size() > 100) break;
@@ -76,12 +77,13 @@ public class GroupDataService {
 
     }
 
-    // 로그인된 유저와 관련된 문제만 선정
-    // 로그인된 유저 레벨과 아래로 2, 위로 5차이나는 문제 가져오기
-    // 다 주고 프론트에서 랜덤으로 추천해주는 것도 좋을듯?! -> 안좋음, 백에서 다 정리해서 주자
-    private List<Problem> getUserTierProblems(UserGroup userAndGroup, List<User> userList){
+    /**
+     * 로그인된 유저와 관련된 문제만 선정
+     * 로그인된 유저 레벨과 아래로 2, 위로 5차이나는 문제 가져오기
+     * */
+    private List<Problem> getUserTierProblems(UserGroup userGroup, List<User> userList){
         Map<Integer, Problem> map = new HashMap<>();
-        User user = userAndGroup.getUser();
+        User user = userGroup.getUser();
         int TIER_DIFF_UPPERBOUND = 5;
         int TIER_DIFF_LOWERBOUND = -2;
 
@@ -89,6 +91,7 @@ public class GroupDataService {
             int tierDiff = problem.getTier() - user.getTier();
             if (TIER_DIFF_LOWERBOUND <= tierDiff && tierDiff <= TIER_DIFF_UPPERBOUND) {
                 map.putIfAbsent(problem.getUserId(), problem);
+
                 int mapTierDiff = map.get(problem.getUserId()).getTier() - user.getTier();
                 if (Math.abs(tierDiff) < Math.abs(mapTierDiff)){
                     map.put(problem.getUserId(), problem);
@@ -99,18 +102,20 @@ public class GroupDataService {
         return new ArrayList<>(map.values());
     }
 
-    private List<RecomProblem> getRecomProblems(UserGroup userAndGroup){
-        return recomProblemRepository.selectGroupRecomProblems(userAndGroup.getGroup().getId());
+    private List<RecomProblem> getRecomProblems(UserGroup userGroup){
+        return recomProblemRepository.selectGroupRecomProblems(userGroup.getGroup().getId());
     }
 
-    // 그룹의 모든 문제의 알고리즘 정보 선정
-    // user_group과 problem_algorithm 테이블을 연동하기 위해서는 join을 3번해야해서 모든 알고리즘을 가져오고 이분 탐색을 사용하였다.
+    /**
+     * 그룹의 모든 문제의 알고리즘 정보 선정
+     * user_group과 problem_algorithm 테이블을 연동하기 위해서는 join을 3번해야해서 모든 알고리즘을 가져오고 이분 탐색을 사용
+     * */
     private List<ProblemAlgorithm> getAlgorithms(List<Problem> top100problemList, List<RecomProblem> recomProblemList){
-        List<ProblemAlgorithm> problemAlgorithms = problemAlgorithmRepository.selectAllAlgorithm(); // 문제 번호로 오름차순 정렬
-        int[] problemNums = new int[problemAlgorithms.size()];
-        for (int i = 0; i< problemAlgorithms.size(); i++){
-            problemNums[i] = problemAlgorithms.get(i).getProblemNum();
-        }
+        List<ProblemAlgorithm> problemAlgorithms = problemAlgorithmRepository.selectAllAlgorithms(); // 문제 번호로 오름차순 정렬
+
+        int[] problemNums = problemAlgorithms.stream()
+                .mapToInt(ProblemAlgorithm::getProblemNum)
+                .toArray();
 
         // BinarySearch / 이분탐색
         List<ProblemAlgorithm> returnList = new ArrayList<>();
@@ -124,8 +129,8 @@ public class GroupDataService {
         return returnList;
     }
 
-    private List<Problem> getUserProblems(UserGroup userAndGroup){
-        return problemRepository.selectUserProblem(userAndGroup.getUser().getUserId());
+    private List<Problem> getUserProblems(UserGroup userGroup){
+        return problemRepository.selectUserProblems(userGroup.getUser().getUserId());
     }
 
 

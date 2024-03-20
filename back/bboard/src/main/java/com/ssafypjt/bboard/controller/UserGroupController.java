@@ -72,7 +72,7 @@ public class UserGroupController {
     // 이미 30명이 넘었으면 BAD_REQUEST
     // 이외 (정상 등록 & 백준에 없는 아이디 입력) OK
     // 문제 : 백준에 없는 아이디를 입력했을 때와 정상적으로 등록되었을 때 구분 불가능
-    // 비동기로 처리되기 때문에 리턴값이 없도록 구현..
+    // 비동기로 처리되기 때문에 리턴값이 없도록 구현
     @GetMapping("/user/add/{userName}")
     public ResponseEntity<?> regist(@PathVariable String userName){
 
@@ -82,9 +82,14 @@ public class UserGroupController {
         if (userService.getAllUser().size() >= 30)
             return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
 
+
         userAddReloadDomain.userAddTask(userName);
-        User user = userService.getUserByName(userName);
-        return new ResponseEntity<>(user.getUserId(), HttpStatus.OK);
+        User newUser = userService.getUserByName(userName);
+
+        // Async
+        userAddReloadDomain.userAddUpdateTask(newUser);
+
+        return new ResponseEntity<Integer>(newUser.getUserId(), HttpStatus.OK);
     }
 
 
@@ -104,7 +109,7 @@ public class UserGroupController {
 
     @GetMapping("/user/loginuser") // 로그인된 유저의 그룹 정보 가져오기
     public ResponseEntity<User> getLoginUser(HttpServletRequest request){
-        return new ResponseEntity<>(userService.getUser((Integer) sessionManager.getSession(request)), HttpStatus.OK);
+        return new ResponseEntity<>(userService.getUser(sessionManager.getSession(request)), HttpStatus.OK);
     }
 
 
@@ -206,7 +211,7 @@ public class UserGroupController {
     }
 
     private int getCurrentUserId(HttpServletRequest request) {
-        return (int) sessionManager.getSession(request);
+        return sessionManager.getSession(request);
     }
 
 }

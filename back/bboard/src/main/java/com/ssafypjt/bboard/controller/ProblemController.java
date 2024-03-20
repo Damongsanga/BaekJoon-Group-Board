@@ -51,7 +51,7 @@ public class ProblemController {
     public ResponseEntity<?> addRecomProblem(@RequestBody Map<String, Object> requestMap, HttpServletRequest request){
         int problemId = (mapper.convertValue(requestMap.get("problemNum"), Integer.class));
         int groupId = (mapper.convertValue(requestMap.get("group"), Integer.class));
-        int userId = (Integer) sessionManager.getSession(request);
+        int userId = sessionManager.getSession(request);
 
         int result = problemService.addRecomProblem(problemId, groupId, userId);
         return new ResponseEntity<>(result, HttpStatus.OK);

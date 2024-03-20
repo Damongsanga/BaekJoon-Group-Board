@@ -22,8 +22,11 @@ public class MainController {
     private final GroupDataService groupDataService;
     private final SessionManager sessionManager;
 
-    // 그룹 page에서 Main page 진입시 그룹 정보 반환
-    // 만약 로그인된 유저가 해당 그룹에 등록되지 않았으면 BAD_REQUEST
+    /**
+     * 그룹 page에서 Main page 진입시 그룹 정보 반환
+    * 만약 로그인된 유저가 해당 그룹에 등록되지 않았으면 BAD_REQUEST
+    *
+    * */
     @GetMapping("/group/{groupId}")
     public ResponseEntity<?> getGroupInfo(@PathVariable int groupId, HttpServletRequest request){
         Group group = groupService.getGroup(groupId);
@@ -37,7 +40,7 @@ public class MainController {
     }
 
     private int getCurrentUserId(HttpServletRequest request) {
-        return (Integer) sessionManager.getSession(request);
+        return sessionManager.getSession(request);
     }
 
 }

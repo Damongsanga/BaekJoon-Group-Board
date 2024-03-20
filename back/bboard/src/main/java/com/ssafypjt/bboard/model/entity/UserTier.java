@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserTier {
@@ -19,7 +18,9 @@ public class UserTier {
     private int tier;
     @JsonProperty("solved")
     private int problemCount;
+    @Setter
     private int pageNo = 1;
+    @Setter
     private int pageIdx;
 
 }

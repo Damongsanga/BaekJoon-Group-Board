@@ -33,13 +33,13 @@ public class SessionManager {
         response.addCookie(mySessionCookie);
     }
 
-    public Object getSession(HttpServletRequest request) {
+    public Integer getSession(HttpServletRequest request) {
         // 쿠기를 찾음
         Cookie sessionCookie = findCookie(request, SESSION_COOKIE_NAME);
         if (sessionCookie == null) {
             return null;
         }
-        return sessionStore.get(sessionCookie.getValue());
+        return (Integer) sessionStore.get(sessionCookie.getValue());
     }
 
     public void expire(HttpServletRequest request) {

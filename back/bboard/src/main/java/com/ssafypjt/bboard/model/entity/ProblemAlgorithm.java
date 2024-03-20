@@ -1,13 +1,12 @@
 package com.ssafypjt.bboard.model.entity;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class ProblemAlgorithm {
     private int problemNum;
     private String algorithm;
