@@ -10,7 +10,7 @@ public interface UserRepository {
 
     @Select("SELECT user_id as userId, user_name as userName, tier, solved_rank as solvedRank, img_url as imgUrl\n" +
             " FROM users")
-    public List<User> selectAllUser();
+    public List<User> selectAllUsers();
 
     @Select("SELECT user_id as userId, user_name as userName, tier, solved_rank as solvedRank, img_url as imgUrl\n" +
             " FROM users WHERE user_id = #{userId}")

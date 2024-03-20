@@ -28,10 +28,10 @@ public interface ProblemRepository {
             "</foreach>",
             "</script>"
     })
-    public List<Problem> selectGroupProblem(@Param("users") List<User> user);
+    public List<Problem> selectGroupProblems(@Param("users") List<User> user);
 
     @Select("SELECT id, user_id as userId, problem_num as problemNum, tier, title FROM problem WHERE user_id = #{userId}")
-    public List<Problem> selectUserProblem(int userId);
+    public List<Problem> selectUserProblems(int userId);
 
     @Delete("DELETE from problem")
     public int deleteAll();

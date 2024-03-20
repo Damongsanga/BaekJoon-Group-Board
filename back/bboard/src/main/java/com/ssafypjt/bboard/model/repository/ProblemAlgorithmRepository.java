@@ -26,6 +26,6 @@ public interface ProblemAlgorithmRepository {
     public ProblemAlgorithm selectAlgorithm(int problemNum);
 
     @Select("SELECT problem_num as problemNum, algorithm FROM problem_algorithm ORDER BY problem_num ASC")
-    public List<ProblemAlgorithm> selectAllAlgorithm();
+    public List<ProblemAlgorithm> selectAllAlgorithms();
 
 }
