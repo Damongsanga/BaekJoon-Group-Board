@@ -1,4 +1,4 @@
-package com.ssafypjt.bboard.model.domain;
+package com.ssafypjt.bboard.model.service;
 
 import com.ssafypjt.bboard.model.domain.solvedacAPI.*;
 import com.ssafypjt.bboard.model.entity.User;
@@ -11,24 +11,24 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.*;
 
-@Component
+@Service
 @Slf4j
 @RequiredArgsConstructor
-public class ReloadDomain {
+public class ReloadService {
 
     private final ProblemRepository problemRepository;
     private final UserRepository userRepository;
     private final ProblemAlgorithmRepository problemAlgorithmRepository;
     private final ProblemDomain problemDomain;
     private final UserDomain userDomain;
-    private final FetchDomain fetchDomain;
+    private final FetchDataDomain fetchDataDomain;
     private final UserTierDomain userTierDomain;
     private final UserTierProblemRepository userTierProblemRepository;
     private final TierProblemRepository tierProblemRepository;
@@ -50,7 +50,7 @@ public class ReloadDomain {
         Flux.fromIterable(users)
                 .delayElements(Duration.ofMillis(1))
                 .flatMap(user ->
-                        fetchDomain.fetchOneQueryData(
+                        fetchDataDomain.fetchOneQueryData(
                                         SolvedAcApi.USER.getPath(),
                                         SolvedAcApi.USER.getQuery(user.getUserName())
                                 )
@@ -82,7 +82,7 @@ public class ReloadDomain {
         Flux.fromIterable(users)
                 .delayElements(Duration.ofMillis(1))
                 .flatMap(user ->
-                        fetchDomain.fetchOneQueryData(
+                        fetchDataDomain.fetchOneQueryData(
                                         SolvedAcApi.PROBLEMANDALGO.getPath(),
                                         SolvedAcApi.PROBLEMANDALGO.getQuery(user.getUserName())
                                 )
@@ -130,7 +130,7 @@ public class ReloadDomain {
         Flux.fromIterable(users)
                 .delayElements(Duration.ofMillis(1))
                 .flatMap(user ->
-                        fetchDomain.fetchOneQueryDataUserTier(
+                        fetchDataDomain.fetchOneQueryDataUserTier(
                                         SolvedAcApi.TIER.getPath(),
                                         SolvedAcApi.TIER.getQuery(user.getUserName())
                                 ) // 유저 티어 반환
@@ -180,7 +180,7 @@ public class ReloadDomain {
                 .delayElements(Duration.ofMillis(1))
                 .flatMap(userPageNo ->
                         // 현재 유저의 푼 문제 페이징 API 요청
-                        fetchDomain.fetchOneQueryData(
+                        fetchDataDomain.fetchOneQueryData(
                                         SolvedAcApi.USERTIERPROBLEM.getPath(),
                                         SolvedAcApi.USERTIERPROBLEM.getQuery(userPageNo.getUser().getUserName(), userPageNo.getPageNo())
                                 )

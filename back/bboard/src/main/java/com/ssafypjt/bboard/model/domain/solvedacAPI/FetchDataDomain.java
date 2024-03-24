@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 @RequiredArgsConstructor
-public class FetchDomain {
+public class FetchDataDomain {
     private final WebClient webClient;
 
     public Flux<JsonNode> fetchOneQueryData(String pathQuery, String query) {

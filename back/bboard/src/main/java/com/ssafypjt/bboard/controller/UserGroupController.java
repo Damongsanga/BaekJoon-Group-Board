@@ -1,7 +1,7 @@
 package com.ssafypjt.bboard.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssafypjt.bboard.model.domain.UserAddReloadDomain;
+import com.ssafypjt.bboard.model.service.UserAddReloadService;
 import com.ssafypjt.bboard.model.entity.Group;
 import com.ssafypjt.bboard.model.entity.User;
 import com.ssafypjt.bboard.model.service.GroupService;
@@ -25,11 +25,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserGroupController {
 
-    private UserService userService;
-    private GroupService groupService;
-    private ObjectMapper mapper;
-    private UserAddReloadDomain userAddReloadDomain;
-    private SessionManager sessionManager;
+    private final UserService userService;
+    private final GroupService groupService;
+    private final ObjectMapper mapper;
+    private final UserAddReloadService userAddReloadService;
+    private final SessionManager sessionManager;
 
 
     // 유저 입력 페이지
@@ -83,11 +83,11 @@ public class UserGroupController {
             return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
 
 
-        userAddReloadDomain.userAddTask(userName);
+        userAddReloadService.userAddTask(userName);
         User newUser = userService.getUserByName(userName);
 
         // Async
-        userAddReloadDomain.userAddUpdateTask(newUser);
+        userAddReloadService.userAddUpdateTask(newUser);
 
         return new ResponseEntity<Integer>(newUser.getUserId(), HttpStatus.OK);
     }

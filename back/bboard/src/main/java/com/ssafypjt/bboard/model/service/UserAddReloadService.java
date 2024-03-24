@@ -1,4 +1,4 @@
-package com.ssafypjt.bboard.model.domain;
+package com.ssafypjt.bboard.model.service;
 
 import com.ssafypjt.bboard.model.domain.solvedacAPI.*;
 import com.ssafypjt.bboard.model.entity.User;
@@ -9,9 +9,8 @@ import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
 import com.ssafypjt.bboard.model.vo.UserPageNo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -19,17 +18,17 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.*;
 
-@Component
+@Service
 @Slf4j
 @RequiredArgsConstructor
-public class UserAddReloadDomain {
+public class UserAddReloadService {
 
     private final ProblemRepository problemRepository;
     private final UserRepository userRepository;
     private final ProblemAlgorithmRepository problemAlgorithmRepository;
     private final ProblemDomain problemDomain;
     private final UserDomain userDomain;
-    private final FetchDomain fetchDomain;
+    private final FetchDataDomain fetchDataDomain;
     private final UserTierDomain userTierDomain;
     private final UserTierProblemRepository userTierProblemRepository;
     private final TierProblemRepository tierProblemRepository;
@@ -44,7 +43,7 @@ public class UserAddReloadDomain {
     private User processUser(String userName) {
         Map<String, User> map = new HashMap<>();
         var mono = Mono.defer(() ->
-                fetchDomain.fetchOneQueryDataMono(
+                fetchDataDomain.fetchOneQueryDataMono(
                                 SolvedAcApi.USER.getPath(),
                                 SolvedAcApi.USER.getQuery(userName)
                         )
@@ -77,7 +76,7 @@ public class UserAddReloadDomain {
     private void processProblem(User user) {
         List<ProblemAlgorithmVo> problemAlgorithmVos = new ArrayList<>();
         var mono = Mono.defer(() ->
-                fetchDomain.fetchOneQueryDataMono(
+                fetchDataDomain.fetchOneQueryDataMono(
                                 SolvedAcApi.PROBLEMANDALGO.getPath(),
                                 SolvedAcApi.PROBLEMANDALGO.getQuery(user.getUserName())
                         )
@@ -110,7 +109,7 @@ public class UserAddReloadDomain {
         totalMap.put(user.getUserId(), new ArrayList<>());
 
         var mono = Flux.defer(() ->
-                fetchDomain.fetchOneQueryDataUserTier(
+                fetchDataDomain.fetchOneQueryDataUserTier(
                                 SolvedAcApi.TIER.getPath(),
                                 SolvedAcApi.TIER.getQuery(user.getUserName())
                         )
@@ -147,7 +146,7 @@ public class UserAddReloadDomain {
         Flux.fromIterable(userPageNoList)
                 .delayElements(Duration.ofMillis(1))
                 .flatMap(userPageNo ->
-                        fetchDomain.fetchOneQueryData(
+                        fetchDataDomain.fetchOneQueryData(
                                         SolvedAcApi.USERTIERPROBLEM.getPath(),
                                         SolvedAcApi.USERTIERPROBLEM.getQuery(userPageNo.getUser().getUserName(), userPageNo.getPageNo())
                                 )
