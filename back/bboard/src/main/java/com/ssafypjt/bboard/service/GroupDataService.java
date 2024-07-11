@@ -1,4 +1,4 @@
-package com.ssafypjt.bboard.model.service;
+package com.ssafypjt.bboard.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;

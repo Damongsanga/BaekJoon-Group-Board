@@ -3,7 +3,7 @@ package com.ssafypjt.bboard.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafypjt.bboard.model.entity.Problem;
 import com.ssafypjt.bboard.model.entity.UserTier;
-import com.ssafypjt.bboard.model.service.ProblemService;
+import com.ssafypjt.bboard.service.ProblemService;
 import com.ssafypjt.bboard.session.SessionManager;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

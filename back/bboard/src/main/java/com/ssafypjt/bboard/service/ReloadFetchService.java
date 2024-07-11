@@ -1,4 +1,4 @@
-package com.ssafypjt.bboard.model.service;
+package com.ssafypjt.bboard.service;
 
 import com.ssafypjt.bboard.model.domain.solvedacAPI.*;
 import com.ssafypjt.bboard.model.entity.User;
@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -21,21 +20,17 @@ import java.util.*;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ReloadService {
+public class ReloadFetchService {
 
-    private final ProblemRepository problemRepository;
+    private final ReloadService reloadService;
     private final UserRepository userRepository;
-    private final ProblemAlgorithmRepository problemAlgorithmRepository;
     private final ProblemDomain problemDomain;
     private final UserDomain userDomain;
     private final FetchDataDomain fetchDataDomain;
     private final UserTierDomain userTierDomain;
-    private final UserTierProblemRepository userTierProblemRepository;
-    private final TierProblemRepository tierProblemRepository;
     private final UserTierProblemDomain userTierProblemDomain;
 
     @Scheduled(fixedRate = 600000)
-    @Transactional
     @Async
     public void scheduledTask() {
         log.info("maxThreads : {}", Runtime.getRuntime().availableProcessors());
@@ -55,7 +50,7 @@ public class ReloadService {
                                         SolvedAcApi.USER.getQuery(user.getUserName())
                                 )
                                 .doOnNext(userNodeData -> {
-                                            updateUser(userDomain.makeUserObject(userNodeData));
+                                            reloadService.updateUser(userDomain.makeUserObject(userNodeData));
                                         }
                                 )
                 )
@@ -69,10 +64,6 @@ public class ReloadService {
                             processProblem(userRepository.selectAllUsers());
                         }
                 );
-    }
-
-    private void updateUser(User user) {
-        userRepository.updateUser(user);
     }
 
     // 문제 리셋
@@ -95,7 +86,7 @@ public class ReloadService {
                         null, // onNext 처리는 필요 없음
                         e -> log.error("error message : {}", e.getMessage()),
                         () -> {
-                            resetProblems(problemAlgorithmVos);
+                            reloadService.resetProblems(problemAlgorithmVos);
                             log.info("updated problem : {}", problemAlgorithmVos.size());
                             log.info("reset time : {} ms", System.currentTimeMillis() - cur);
 
@@ -105,18 +96,6 @@ public class ReloadService {
                 );
 
     }
-
-    private void resetProblems(List<ProblemAlgorithmVo> list) {
-        // 기존 테이블 삭제
-        problemRepository.deleteAll();
-        userTierProblemRepository.deleteAll(); // 티어별 문제도 삭제해야 알고리즘 삭제 가능
-        problemAlgorithmRepository.deleteAll();
-
-        Collections.sort(list);
-        problemAlgorithmRepository.insertAlgorithms(list); // 알고리즘 먼저 추가 필요
-        problemRepository.insertProblems(list);
-    }
-
 
     private void processUserTier(List<User> users) {
         Long cur = System.currentTimeMillis();
@@ -149,19 +128,12 @@ public class ReloadService {
                                 List<UserTier> userTierList = totalMap.get(userId);
                                 userTierDomain.makeUserTierObject(userTierList);
                             }
-                            resetUserTier(totalMap);
+                            reloadService.resetUserTier(totalMap);
                             log.info("tier updated user : {}", users.size());
                             log.info("reset time : {} ms", System.currentTimeMillis() - cur);
                             processUserTierProblem(users, totalMap);
                         }
                 );
-    }
-
-    private void resetUserTier(Map<Integer, List<UserTier>> totalMap) {
-        tierProblemRepository.deleteAll();
-        for (List<UserTier> userTierList : totalMap.values()) {
-            tierProblemRepository.insertUserTiers(userTierList);
-        }
     }
 
     // problemDomain 코드 재시용
@@ -200,17 +172,13 @@ public class ReloadService {
                         e -> log.error("error message : {}", e.getMessage()),
                         () -> {
                             List<ProblemAlgorithmVo> totalProblemAndAlgoList = userTierProblemDomain.makeTotalProblemAndAlgoList(memoMap, totalMap);
-                            resetUserTierProblems(totalProblemAndAlgoList);
+                            reloadService.resetUserTierProblems(totalProblemAndAlgoList);
                             log.info("updated user-tier-problem : {}", totalProblemAndAlgoList.size());
                             log.info("reset time : {} ms", System.currentTimeMillis() - cur);
                         }
                 );
     }
 
-    private void resetUserTierProblems(List<ProblemAlgorithmVo> list) {
-        userTierProblemRepository.deleteAll();
-        problemAlgorithmRepository.insertAlgorithms(list);
-        userTierProblemRepository.insertTierProblems(list);
-    }
+
 
 }

@@ -1,4 +1,4 @@
-package com.ssafypjt.bboard.model.service;
+package com.ssafypjt.bboard.service;
 
 import com.ssafypjt.bboard.model.domain.solvedacAPI.*;
 import com.ssafypjt.bboard.model.entity.User;
@@ -21,26 +21,19 @@ import java.util.*;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class UserAddReloadService {
+public class UserAddReloadFetchService {
 
-    private final ProblemRepository problemRepository;
+    private final UserAddReloadService userAddReloadService;
     private final UserRepository userRepository;
-    private final ProblemAlgorithmRepository problemAlgorithmRepository;
     private final ProblemDomain problemDomain;
     private final UserDomain userDomain;
     private final FetchDataDomain fetchDataDomain;
     private final UserTierDomain userTierDomain;
-    private final UserTierProblemRepository userTierProblemRepository;
-    private final TierProblemRepository tierProblemRepository;
     private final UserTierProblemDomain userTierProblemDomain;
 
     @Transactional
-    public void userAddTask(String userName) {
+    public User userAddTask(String userName) {
         //유저 추가
-        processUser(userName);
-    }
-
-    private User processUser(String userName) {
         Map<String, User> map = new HashMap<>();
         var mono = Mono.defer(() ->
                 fetchDataDomain.fetchOneQueryDataMono(
@@ -68,7 +61,6 @@ public class UserAddReloadService {
 
 
     @Async
-    @Transactional
     public void userAddUpdateTask(User user) {
         processProblem(user);
     }
@@ -88,20 +80,13 @@ public class UserAddReloadService {
                 null,
                 e -> log.error("error message : {}", e.getMessage()),
                 () -> {
-                    resetProblems(problemAlgorithmVos);
+                    userAddReloadService.resetProblems(problemAlgorithmVos);
                     processUserTier(user);
                 }
         );
     }
 
-    private void resetProblems(List<ProblemAlgorithmVo> list) {
-        Collections.sort(list);
-        problemAlgorithmRepository.insertAlgorithms(list);
-        problemRepository.insertProblems(list);
 
-        log.info("problems added : {}", list.size());
-        log.info("add problems are {}", list.size());
-    }
 
     private void processUserTier(User user) {
         // 유저 : 유저 티어
@@ -126,7 +111,7 @@ public class UserAddReloadService {
                 e -> log.error("error message : {}", e.getMessage()),
                 () -> {
                     userTierDomain.makeUserTierObject(totalMap.get(user.getUserId()));
-                    resetUserTier(totalMap.get(user.getUserId()));
+                    userAddReloadService.resetUserTier(totalMap.get(user.getUserId()));
                     log.info("{} user tier changed : {}", user, totalMap.get(user.getUserId()));
                     processUserTierProblem(user, totalMap);
                 }
@@ -134,9 +119,6 @@ public class UserAddReloadService {
 
     }
 
-    private void resetUserTier(List<UserTier> list) {
-        tierProblemRepository.insertUserTiers(list);
-    }
 
     private void processUserTierProblem(User user, Map<Integer, List<UserTier>> totalMap) {
         Long cur = System.currentTimeMillis();
@@ -164,16 +146,13 @@ public class UserAddReloadService {
                         e -> log.error("error message : {}", e.getMessage()),
                         () -> {
                             List<ProblemAlgorithmVo> totalProblemAndAlgoList = userTierProblemDomain.makeTotalProblemAndAlgoList(memoMap, totalMap);
-                            resetUserTierProblems(totalProblemAndAlgoList);
+                            userAddReloadService.resetUserTierProblems(totalProblemAndAlgoList);
                             log.info("{} user tier problem added : {}", user, totalProblemAndAlgoList.size());
                             log.info("{} user reload time : {}s", user, System.currentTimeMillis() - cur);
                         } // 완료 처리
                 );
     }
 
-    private void resetUserTierProblems(List<ProblemAlgorithmVo> list) {
-        problemAlgorithmRepository.insertAlgorithms(list);
-        userTierProblemRepository.insertTierProblems(list);
-    }
+
 
 }

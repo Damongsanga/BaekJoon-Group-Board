@@ -1,10 +1,10 @@
 package com.ssafypjt.bboard.controller;
 
-import com.ssafypjt.bboard.model.service.GroupDataService;
+import com.ssafypjt.bboard.service.GroupDataService;
 import com.ssafypjt.bboard.model.entity.UserGroup;
 import com.ssafypjt.bboard.model.entity.*;
-import com.ssafypjt.bboard.model.service.GroupService;
-import com.ssafypjt.bboard.model.service.UserService;
+import com.ssafypjt.bboard.service.GroupService;
+import com.ssafypjt.bboard.service.UserService;
 import com.ssafypjt.bboard.session.SessionManager;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

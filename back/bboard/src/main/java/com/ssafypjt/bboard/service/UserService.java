@@ -1,4 +1,4 @@
-package com.ssafypjt.bboard.model.service;
+package com.ssafypjt.bboard.service;
 
 import com.ssafypjt.bboard.model.entity.User;
 

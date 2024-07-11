@@ -1,11 +1,11 @@
 package com.ssafypjt.bboard.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssafypjt.bboard.model.service.UserAddReloadService;
+import com.ssafypjt.bboard.service.UserAddReloadFetchService;
 import com.ssafypjt.bboard.model.entity.Group;
 import com.ssafypjt.bboard.model.entity.User;
-import com.ssafypjt.bboard.model.service.GroupService;
-import com.ssafypjt.bboard.model.service.UserService;
+import com.ssafypjt.bboard.service.GroupService;
+import com.ssafypjt.bboard.service.UserService;
 import com.ssafypjt.bboard.session.SessionConst;
 import com.ssafypjt.bboard.session.SessionManager;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,7 +28,7 @@ public class UserGroupController {
     private final UserService userService;
     private final GroupService groupService;
     private final ObjectMapper mapper;
-    private final UserAddReloadService userAddReloadService;
+    private final UserAddReloadFetchService userAddReloadFetchService;
     private final SessionManager sessionManager;
 
 
@@ -71,8 +71,6 @@ public class UserGroupController {
     // 유저가 이미 등록되면 IM_USED
     // 이미 30명이 넘었으면 BAD_REQUEST
     // 이외 (정상 등록 & 백준에 없는 아이디 입력) OK
-    // 문제 : 백준에 없는 아이디를 입력했을 때와 정상적으로 등록되었을 때 구분 불가능
-    // 비동기로 처리되기 때문에 리턴값이 없도록 구현
     @GetMapping("/user/add/{userName}")
     public ResponseEntity<?> regist(@PathVariable String userName){
 
@@ -83,11 +81,10 @@ public class UserGroupController {
             return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
 
 
-        userAddReloadService.userAddTask(userName);
-        User newUser = userService.getUserByName(userName);
+        User newUser = userAddReloadFetchService.userAddTask(userName);
 
         // Async
-        userAddReloadService.userAddUpdateTask(newUser);
+        userAddReloadFetchService.userAddUpdateTask(newUser);
 
         return new ResponseEntity<Integer>(newUser.getUserId(), HttpStatus.OK);
     }
