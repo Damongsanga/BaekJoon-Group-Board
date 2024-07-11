@@ -1,4 +1,4 @@
-package com.ssafypjt.bboard.model.enums;
+package com.ssafypjt.bboard.model;
 
 import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
 import com.ssafypjt.bboard.model.entity.Problem;

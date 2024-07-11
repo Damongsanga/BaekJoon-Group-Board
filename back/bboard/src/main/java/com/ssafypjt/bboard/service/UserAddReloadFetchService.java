@@ -3,7 +3,7 @@ package com.ssafypjt.bboard.service;
 import com.ssafypjt.bboard.model.domain.solvedacAPI.*;
 import com.ssafypjt.bboard.model.entity.User;
 import com.ssafypjt.bboard.model.entity.UserTier;
-import com.ssafypjt.bboard.model.enums.SolvedAcApi;
+import com.ssafypjt.bboard.model.SolvedAcApi;
 import com.ssafypjt.bboard.model.repository.*;
 import com.ssafypjt.bboard.model.vo.ProblemAlgorithmVo;
 import com.ssafypjt.bboard.model.vo.UserPageNo;
